@@ -1,29 +1,35 @@
 package storageFn_test
 
 import (
+	"context"
 	"fmt"
 	"github.com/jaemyoun/gFn/storageFn"
+	"sync"
 	"testing"
 )
 
 func TestNew(t *testing.T) {
 
-	storageFn.New(storageFn.S3, region)
+	region := "ap-northeast-1"
+	s, err := storageFn.New(storageFn.S3, region)
+	if err != nil {
+		t.Error(err)
+	}
+	bucket := "dev-"
 	storageFn.NewWithBucket(storageFn.GCS, bucket)
 
-	ListOutput := storageFn.List(&storageFn.ListInput{
-		bucket:     bucket,
-		prefix:     prefix,
-		delimiter:  delimiter,
-		onlyObject: false,
+	out := s.List(&storageFn.ListInput{
+		Bucket:    bucket,
+		Prefix:    "server/",
+		Delimiter: "/",
 	})
 
 	select {
-	case err := <-ListOutput.Done():
+	case err := <-out.Done():
 		if err != nil {
 			t.Errorf("wrong list objects: %v", err)
 		}
-	case output := <-ListOutput.Output():
+	case output := <-out.Output():
 		fmt.Println(output)
 	}
 
